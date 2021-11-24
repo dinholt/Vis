@@ -1,4 +1,3 @@
-from _typeshed import Self
 import csv
 import sys
 import sqlite3
@@ -35,14 +34,22 @@ class InMemoryDatabase():
 
 class DataProcess():
     def __init__(self):
-        pass
-
+        self.shops = ShopDetails()
+        self.comments = Comments()
+    def get_all_shops(self):
+        results = []
+        for poiid in self.shops.hash_table:
+            shop_name = self.shops.hash_table[poiid][1] 
+            shop_add = self.shops.hash_table[poiid][2]
+            shop_coo = (self.shops.hash_table[poiid][8], self.shops.hash_table[poiid][9])
+            results.append([ poiid,shop_name,shop_add,shop_coo ])
+        return results
 
 class DataLoader():
     '''读取csv文件'''
     def __init__(self,*args,**kwargs):
         super(__class__,self).__init__(*args,**kwargs)
-        self.db = InMemoryDatabase()
+        #self.db = InMemoryDatabase()
         self.hash_table = dict()
 
     def load(self,fn,key_col):
@@ -57,24 +64,24 @@ class DataLoader():
         for row in csv_reader:
             if row[key_col].isnumeric():
                 self.hash_table[row[key_col]] = row
-                self.db.insert(row)
+                #self.db.insert(row)
             csv_row_count += 1
         print("Csv loaded, {0} rows in csv file, {1} rows in memory.".format(csv_row_count,len(self.hash_table)))
         print("Hash Table memory usage:",int(sys.getsizeof(self.hash_table)/1024),"kb.")
 
-class ShopDetails(CsvData):
+class ShopDetails(DataLoader):
     '''读取商店信息文件'''
     def __init__(self,*args,**kwargs):
         super(__class__,self).__init__(*args,**kwargs)
         self.load("shop_details.csv",0)
 
-class Comments(CsvData):
+class Comments(DataLoader):
     '''读取评论信息文件'''
     def __init__(self,*args,**kwargs):
         super(__class__,self).__init__(*args,**kwargs)
         self.load("shop_comments.csv",9)
 
-TEST_FLAG = True
+TEST_FLAG = False
 
 if TEST_FLAG and __name__ == '__main__':
     c = Comments()

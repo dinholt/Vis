@@ -1,6 +1,9 @@
 import csv
 import sys
 import sqlite3
+from wordcloud import WordCloud
+from PIL import Image
+import io
 
 def sqlite_escape(keyword):
     keyword = keyword.replace("/", "//");  
@@ -13,6 +16,14 @@ def sqlite_escape(keyword):
     keyword = keyword.replace("(", "/(");  
     keyword = keyword.replace(")", "/)");  
     return keyword
+
+def wordcloudgen():
+    img = io.BytesIO()
+    txt = open("bee.txt",'r').read()
+    wordcloud = WordCloud(width=370,height=350,background_color="white",colormap="plasma").generate(txt).to_image().save(img,format="PNG")
+    img.seek(0)
+    print(img)
+    return img
 
 class InMemoryDatabase():
     '''内存数据库'''
@@ -44,6 +55,19 @@ class DataProcess():
             shop_coo = (self.shops.hash_table[poiid][8], self.shops.hash_table[poiid][9])
             results.append([ poiid,shop_name,shop_add,shop_coo ])
         return results
+    def get_shop_detail(self,poiid):
+        result = dict()
+        shop_data = self.shops.hash_table[poiid]
+        result['name'] = shop_data[1]
+        result['avgScore'] = shop_data[2]
+        result['address'] = shop_data[3]
+        result['phone'] = shop_data[4]
+        result['openTime'] = shop_data[5]
+        result['extraInfos'] = shop_data[6]
+        result['avgPrice'] = shop_data[10]
+        result['brandId'] = shop_data[11]
+        result['brandName'] = shop_data[12]
+        return result
 
 class DataLoader():
     '''读取csv文件'''
@@ -81,7 +105,7 @@ class Comments(DataLoader):
         super(__class__,self).__init__(*args,**kwargs)
         self.load("shop_comments.csv",9)
 
-TEST_FLAG = False
+TEST_FLAG = True
 
 if TEST_FLAG and __name__ == '__main__':
-    c = Comments()
+    wordcloudgen()

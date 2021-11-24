@@ -2,9 +2,11 @@ function recv()
 {
     $.getJSON("/query?type=all_shops",function(data){
         $.each(data,function(idx,item){
-            option.series[0].data.append([ item[1],item[2][0],item[2][1] ]);
-        });
-    });
+            //console.log(option.series[0].data,"sdkfj");
+            option.series[0].data.push( {name:item[1],value:[item[3][0],item[3][1]], poiid:item[0]} );
+        ;});
+        setOption();
+    })
 }
 
 var chartDom = document.getElementById('view');
@@ -19,32 +21,42 @@ option = {
     bmap: {
         center: [104.741722, 31.46402],
         zoom: 12,
-        roam: true
+        roam: true,
     },
     series: [
       {
         type: 'scatter',
         coordinateSystem: 'bmap',
-        data: [],
-        symbolSize: function (val) {
-            return val[2] / 10;
+        itemStyle: {
+            color: 'rgba(251, 118, 123, 0.3)',
         },
+        large:true,
+        data: [],
+        symbolSize: 8,
         encode: {
             value: 2
         },
         label: {
-            formatter: '{b}',
+            formatter: '<font class="label_text">{b}</font>',
             position: 'right',
             show: false
         },
         emphasis: {
             label: {
             show: true
-        }
+        },
       }
     }]
   };
 
-  recv()
+recv()
 
-myChart.setOption(option);
+myChart.on('click',  function(param) {
+    console.log(param.name);
+    console.log(param.data)
+});
+
+function setOption()
+{
+    myChart.setOption(option);
+}

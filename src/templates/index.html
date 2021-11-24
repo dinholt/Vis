@@ -7,6 +7,21 @@
 				padding: 0;
 				margin: 0;
 			}
+			body{
+				height: 1080px;
+				width: 1920px;
+				background-color: #ddd;
+				overflow: hidden;
+			}
+			#view_border{
+				position: fixed;
+				height: 920px;
+				width: 1200px;
+				top: 20px;
+				left: 360px;
+				border-radius: 12px;
+				overflow: hidden;
+			}
 			#view{
 				height: 100%;
 				width: 100%;
@@ -19,7 +34,8 @@
 		<script></script>
 	</head>
 	<body>
-		<div id="view"></div>
+		<div id="view_border"><div id="view"></div></div>
+		<div></div>
 		<script src="/static/front.js"></script>
 	</body>
 </html>

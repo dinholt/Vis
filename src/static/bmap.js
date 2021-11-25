@@ -187,7 +187,8 @@
         root.appendChild(bmapRoot); // initializes bmap
 
         var mapOptions = bmapModel.get('mapOptions');
-
+        mapOptions.enableMapClick = false;
+        mapOptions.enableDoubleClickZoom = false;
         if (mapOptions) {
           mapOptions = echarts.util.clone(mapOptions); // Not support `mapType`, use `bmap.setMapType(MapType)` instead.
 

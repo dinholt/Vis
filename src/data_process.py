@@ -17,12 +17,17 @@ def sqlite_escape(keyword):
     keyword = keyword.replace(")", "/)");  
     return keyword
 
-def wordcloudgen():
+def wordcloudgen(dp,id_="0",type_="0"):
     img = io.BytesIO()
-    txt = open("bee.txt",'r').read()
-    wordcloud = WordCloud(width=370,height=350,background_color="white",colormap="plasma").generate(txt).to_image().save(img,format="PNG")
+    font = "Deng.ttf"
+    if type_=="shop":
+        txt = dp.comments.get(id_)
+    else:
+        #txt = open("bee.txt",'r').read()
+        txt = "餐饮词云 好耶 好耶 好耶 好耶"
+    wordcloud = WordCloud(font_path=font,width=370,height=350,background_color="white",colormap="plasma").generate(txt).to_image().save(img,format="PNG")
     img.seek(0)
-    print(img)
+    #print(img)
     return img
 
 class InMemoryDatabase():
@@ -47,12 +52,34 @@ class DataProcess():
     def __init__(self):
         self.shops = ShopDetails()
         self.comments = Comments()
-    def get_all_shops(self):
+    def get_all_shops(self,filter_):
         results = []
+        sff,sft,pff,pft = filter_
         for poiid in self.shops.hash_table:
-            shop_name = self.shops.hash_table[poiid][1] 
-            shop_add = self.shops.hash_table[poiid][2]
-            shop_coo = (self.shops.hash_table[poiid][8], self.shops.hash_table[poiid][9])
+            shop = self.shops.hash_table[poiid]
+
+            avgScore = shop[2]
+            if avgScore: 
+                avgScore = float(avgScore)
+                if avgScore<1:
+                    avgScore = 1.0
+            else:
+                avgScore = 1.0
+            avgPrice = shop[10]
+            if avgPrice: 
+                avgPrice = float(avgPrice)
+                if avgPrice>100:
+                    avgPrice = 99
+                if avgPrice<5:
+                    avgPrice = 6
+            else:
+                avgPrice = 5.0
+
+            if avgScore<sff or avgScore>sft or avgPrice<pff or avgPrice>pft:
+                continue
+            shop_name = shop[1] 
+            shop_add = shop[2]
+            shop_coo = (shop[8], shop[9])
             results.append([ poiid,shop_name,shop_add,shop_coo ])
         return results
     def get_shop_detail(self,poiid):
@@ -94,16 +121,32 @@ class DataLoader():
         print("Hash Table memory usage:",int(sys.getsizeof(self.hash_table)/1024),"kb.")
 
 class ShopDetails(DataLoader):
-    '''读取商店信息文件'''
+    '''读取商店信息文件 字段：poiid , name  avgScore , address  phone openTime  extraInfos , hasFoodSafeInfo , longitude , latitude , avgPrice , brandId , brandName '''
     def __init__(self,*args,**kwargs):
         super(__class__,self).__init__(*args,**kwargs)
         self.load("shop_details.csv",0)
 
 class Comments(DataLoader):
-    '''读取评论信息文件'''
+    '''读取评论信息文件 字段: userName,avgPrice,comment,picUrls,commentTime,zanCnt,userLevel,userId,star,reviewId,anonymous,poiId'''
     def __init__(self,*args,**kwargs):
         super(__class__,self).__init__(*args,**kwargs)
         self.load("shop_comments.csv",9)
+        self.poiid_lookup = dict()
+        for comment in self.hash_table:
+            poiid = self.hash_table[comment][-1]
+            if poiid in self.poiid_lookup:
+                self.poiid_lookup[poiid].append(self.hash_table[comment][2])
+            else:
+                self.poiid_lookup[poiid] = [self.hash_table[comment][2] ]
+    
+    def get(self,poiid):
+        if poiid in self.poiid_lookup:
+            if  len(self.poiid_lookup[poiid]) <3:
+                return "数据不足"
+            return " ".join(self.poiid_lookup[poiid])
+        else:
+            return "数据不足"
+
 
 TEST_FLAG = True
 

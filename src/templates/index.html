@@ -6,7 +6,6 @@
 			* {
 				padding: 0;
 				margin: 0;
-				transition: all 0.2s ease-in-out;
 			}
 
 			body {
@@ -25,8 +24,7 @@
 				text-align: center;
 				
 			}
-			#select_shops_analysis
-			{
+			.select{
 				position: fixed;
 				left: 20px;
 				top: 70px;
@@ -35,17 +33,25 @@
 				width: 100px;
 				border-radius: 10px;
 				box-shadow: #999 1px 1px 4px;
+				transition: all 0.2s ease-in-out;
+			}
+			.select_selected{
+				border-width: 3px;
+				height: 57px;
+				width: 97px;
+				border-color: #da4453;
+				border-style: solid;
+			}
+			#select_shops_analysis
+			{
+				left: 20px;
 			}
 			#select_users_analysis
 			{
-				position: fixed;
+				left: 260px;
+			}
+			#select_shops_heat{
 				left: 140px;
-				top: 70px;
-				background-color: #666;
-				height: 60px;
-				width: 100px;
-				border-radius: 10px;
-				box-shadow: #999 1px 1px 4px;
 			}
 			#filter_view{
 				position: fixed;
@@ -94,6 +100,7 @@
 				box-shadow: #666 2px 2px 4px;
 				background-color: rgba(255, 255, 255, 0.85);
 				overflow: hidden;
+				transition: all 0.2s ease-in-out;
 			}
 
 			#detail_view {
@@ -164,19 +171,38 @@
 				width: 40px;
 				line-height: 30px;
 			}
+			.filter{
+				position: absolute;
+				height: 100px;
+				width: 330px;
+				left: 20px;
+				top: 20px;
+			}
+			#price_filter{
+				top: 120px;
+			}
 		</style>
 		<script src="/static/jquery-3.6.0.js"></script>
 		<script src="/static/echarts.js"></script>
 		<script src="/static/bmap.js"></script>
 		<script src="http://api.map.baidu.com/api?v=2.0&ak=KWbLsI5oSCdNhiN0UW6MO48Yda4qXgS1"></script>
-		<script></script>
+		<script src="/static/ion.rangeSlider.js"></script>
+		<link rel="stylesheet" href="/static/ion.rangeSlider.css" />
 	</head>
 	<body>
 		<div id="title">Restaurants in Mianyang</div>
-		<div id="select_shops_analysis">餐馆</div>
-		<div id="select_users_analysis">用户</div>
+		<div class="select" id="select_shops_analysis" onclick="switch_to_scatter()">餐馆</div>
+		<div class="select" id="select_shops_heat" onclick="switch_to_heat()">餐馆热力图</div>
+		<div class="select" id="select_users_analysis">用户</div>
 		<div id="filter_view">
-			过滤
+			<div id="score_filter" class="filter">
+				<font style="font-size: 25px; color: #333333;">评分</font>
+				<input type="text" class="js-range-slider" id="slider_score" />
+			</div>
+			<div id="price_filter" class="filter">
+				<font style="font-size: 25px; color: #333333;">价格</font>
+				<input type="text" class="js-range-slider" id="slider_price" />
+			</div>
 		</div>
 		<div id="word_cloud_view">
 			<img src="/wordcloud" id="wc_img"/>

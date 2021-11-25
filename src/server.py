@@ -13,7 +13,11 @@ def front_end_resp():
 @app.route("/query")
 def query():
     if request.args.get("type") == "all_shops":
-        return jsonify( dp.get_all_shops() )
+        sff = float(request.args.get("sff"))
+        sft = float(request.args.get("sft"))
+        pff = float(request.args.get("pff"))
+        pft = float(request.args.get("pft"))
+        return jsonify( dp.get_all_shops( filter_=[sff,sft,pff,pft]) )
     if request.args.get("type") == "shop_detail":
         poiid = request.args.get("poiid")
         return jsonify( dp.get_shop_detail(poiid) )
@@ -22,9 +26,9 @@ def query():
 @app.route("/wordcloud")
 def wordcloud():
     if request.args.get("type") == "shop":
-        pass
+        return send_file( wordcloudgen(dp,request.args.get("id"),"shop"), mimetype='image/png', as_attachment=False )
     if request.args.get("type") == "user":
         pass
-    return send_file( wordcloudgen(), mimetype='image/png', as_attachment=False )
+    return send_file( wordcloudgen(dp), mimetype='image/png', as_attachment=False )
 
 app.run(debug=True)

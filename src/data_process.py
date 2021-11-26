@@ -21,11 +21,11 @@ def wordcloudgen(dp,id_="0",type_="0"):
     img = io.BytesIO()
     font = "Deng.ttf"
     if type_=="shop":
-        txt = dp.comments.get(id_)
+        txt = " ".join([ i[2] for i in dp.comments.get(id_) ])
     else:
         #txt = open("bee.txt",'r').read()
         txt = "餐饮词云 好耶 好耶 好耶 好耶"
-    wordcloud = WordCloud(font_path=font,width=370,height=350,background_color="white",colormap="plasma").generate(txt).to_image().save(img,format="PNG")
+    wordcloud = WordCloud(font_path=font,width=370,height=350,background_color="white",colormap="hsv").generate(txt).to_image().save(img,format="PNG")
     img.seek(0)
     #print(img)
     return img
@@ -94,6 +94,24 @@ class DataProcess():
         result['avgPrice'] = shop_data[10]
         result['brandId'] = shop_data[11]
         result['brandName'] = shop_data[12]
+        result['stars'] = [0,0,0,0,0]
+        result['comments'] = []
+        for comment in self.comments.get(poiid):
+            if len(comment) <12:
+                continue
+            star = int(int(comment[-4])/10)
+            #print(star)
+            try:
+                result['stars'][star-1] += 1
+            except:
+                print(star)
+            comment_txt = comment[2]
+            comment_uid = comment[-5]
+            result['comments'] .append( (comment_txt,comment_uid ))
+        result['comments'].sort(key=lambda x: - len(x[0]) )
+        result['comments'] = result['comments'][:20]
+        result['comments'] = [ i for i in result['comments'] if i[0] ]
+        print(result['comments'])
         return result
 
 class DataLoader():
@@ -135,17 +153,17 @@ class Comments(DataLoader):
         for comment in self.hash_table:
             poiid = self.hash_table[comment][-1]
             if poiid in self.poiid_lookup:
-                self.poiid_lookup[poiid].append(self.hash_table[comment][2])
+                self.poiid_lookup[poiid].append(self.hash_table[comment])
             else:
-                self.poiid_lookup[poiid] = [self.hash_table[comment][2] ]
+                self.poiid_lookup[poiid] = [self.hash_table[comment]]
     
     def get(self,poiid):
         if poiid in self.poiid_lookup:
-            if  len(self.poiid_lookup[poiid]) <3:
-                return "数据不足"
-            return " ".join(self.poiid_lookup[poiid])
+            if len(self.poiid_lookup[poiid])<12 or len(self.poiid_lookup[poiid][2]) <1:
+                return [[0,0,"数据不足"]]
+            return self.poiid_lookup[poiid]
         else:
-            return "数据不足"
+            return [[0,0,"数据不足"]]
 
 
 TEST_FLAG = True

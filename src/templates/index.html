@@ -14,7 +14,8 @@
 				background-color: #eee;
 				overflow: hidden;
 			}
-			#title{
+
+			#title {
 				position: fixed;
 				top: 15px;
 				left: 20px;
@@ -22,9 +23,10 @@
 				font-family: "agency fb";
 				color: #333;
 				text-align: center;
-				
+
 			}
-			.select{
+
+			.select {
 				position: fixed;
 				left: 20px;
 				top: 70px;
@@ -34,26 +36,32 @@
 				border-radius: 10px;
 				box-shadow: #999 1px 1px 4px;
 				transition: all 0.2s ease-in-out;
+				text-align: center;
+				line-height: 60px;
+				font-size: 25px;
 			}
-			.select_selected{
+
+			.select_selected {
 				border-width: 3px;
 				height: 57px;
 				width: 97px;
 				border-color: #da4453;
 				border-style: solid;
 			}
-			#select_shops_analysis
-			{
+
+			#select_shops_analysis {
 				left: 20px;
 			}
-			#select_users_analysis
-			{
+
+			#select_users_analysis {
 				left: 260px;
 			}
-			#select_shops_heat{
+
+			#select_shops_heat {
 				left: 140px;
 			}
-			#filter_view{
+
+			.filter_view {
 				position: fixed;
 				left: 20px;
 				top: 140px;
@@ -63,7 +71,12 @@
 				border-radius: 10px;
 				box-shadow: #999 1px 1px 4px;
 			}
-			#word_cloud_view{
+			.user_filter_view
+			{
+				display: none;
+			}
+
+			#word_cloud_view {
 				position: fixed;
 				left: 20px;
 				top: 590px;
@@ -74,6 +87,7 @@
 				box-shadow: #999 1px 1px 4px;
 				overflow: hidden;
 			}
+
 			#map_view_border {
 				position: fixed;
 				height: 920px;
@@ -90,7 +104,7 @@
 				width: 100%;
 			}
 
-			#detail_view_border {
+			.detail_view_border {
 				position: fixed;
 				height: 880px;
 				width: 480px;
@@ -134,12 +148,12 @@
 				color: #fff;
 			}
 
-			.text_title {
+			#text_title {
 				font-size: 35px;
 				color: #222;
 			}
 
-			.text_sub {
+			#text_sub {
 				position: absolute;
 				right: 0px;
 				top: -10px;
@@ -147,39 +161,86 @@
 				color: #999;
 			}
 
-			.stars_box {
+			#stars_box {
 				position: absolute;
 				width: 150px;
 			}
 
-			.stars_cutter {
+			#stars_cutter {
 				position: absolute;
 				height: 30px;
 				width: 100px;
 				overflow: hidden;
 			}
 
-			.stars {
+			#stars {
 				position: absolute;
 				height: 30px;
 				width: 100px;
 			}
-			.score{
+
+			#score {
 				position: absolute;
 				color: #666;
 				right: 0px;
 				width: 40px;
 				line-height: 30px;
 			}
-			.filter{
+			#avgp{
+				position: absolute;
+				right: 0;
+			}
+
+			.filter {
 				position: absolute;
 				height: 100px;
 				width: 330px;
 				left: 20px;
 				top: 20px;
 			}
-			#price_filter{
+			.info_box{
+				position: relative;
+				top: 40px;
+				margin-top: 10px;
+				height: 40px;
+				line-height: 40px;
+				width: 100%;
+				background-color: #fff;
+				border-radius: 5px;
+				box-shadow: #bbb 1px 1px 4px;
+				overflow: hidden;
+			}
+			.info_box font{
+				color: #666666;
+				float: left;
+				font-size: 20px;
+				margin-left: 10px;
+				margin-right: 10px;
+			}
+
+			#price_filter {
 				top: 120px;
+			}
+			#star_pie{
+				position: relative;
+				top: 30px;
+				left:50px;
+				height: 330px;
+				width: 330px;
+			}
+			#comments_view{
+				height: 300px;
+				overflow-y: scroll;
+			}
+			.comment{
+				top: 0;
+				width: 99%;
+				margin: 3px;
+				height: auto;
+				min-height: 20px;
+				line-height: 20px;
+				font-size: 15px;
+				color: #333333;
 			}
 		</style>
 		<script src="/static/jquery-3.6.0.js"></script>
@@ -192,9 +253,9 @@
 	<body>
 		<div id="title">Restaurants in Mianyang</div>
 		<div class="select" id="select_shops_analysis" onclick="switch_to_scatter()">餐馆</div>
-		<div class="select" id="select_shops_heat" onclick="switch_to_heat()">餐馆热力图</div>
+		<div class="select" id="select_shops_heat" onclick="switch_to_heat()">热力图</div>
 		<div class="select" id="select_users_analysis">用户</div>
-		<div id="filter_view">
+		<div class="filter_view">
 			<div id="score_filter" class="filter">
 				<font style="font-size: 25px; color: #333333;">评分</font>
 				<input type="text" class="js-range-slider" id="slider_score" />
@@ -204,25 +265,41 @@
 				<input type="text" class="js-range-slider" id="slider_price" />
 			</div>
 		</div>
+		<div class="filter_view user_filter_view">
+			
+		</div>
 		<div id="word_cloud_view">
-			<img src="/wordcloud" id="wc_img"/>
+			<img src="/wordcloud" id="wc_img" />
 		</div>
 		<div id="map_view_border">
 			<div id="map_view"></div>
 		</div>
-		<div id="detail_view_border">
+		<div class="detail_view_border" id="shop_detail_view_border">
 			<div id="detail_view">
-				<div class="text_title">ShopTitle</div>
-				<div class="text_sub">ID:000</div>
-				<div class="stars_box">
-					<div class="stars_cutter">
-						<img class="stars" src="/static/stars.png"/>
+				<div id="text_title">ShopTitle</div>
+				<div id="text_sub">ID:000</div>
+				<div id="stars_box">
+					<div id="stars_cutter">
+						<img id="stars" src="/static/stars.png" />
 					</div>
-					<div class="score">1.5</div>
+					<div id="score">1.5</div>
+				</div>
+				<div id="avgp">均价1.5</div>
+				<div class="info_box">
+					<font>地址</font><div id="add_txt" style="float: left;"></div>
+				</div>
+				<div class="info_box">
+					<font>电话</font><div id="tel_txt"></div>
+				</div>
+				<div id="star_pie"></div>
+				<div id="comments_view" class="info_box">
+					<div class="info_box comment">dfhfdghsdfxh</div>
+					<div class="info_box comment">fghdfgjhfghdfxgh</div>
+					<div class="info_box comment">fghdfghdfgh</div>
 				</div>
 			</div>
-			<div id="dv_close_btn" onclick="close_shop_detail()">×</button>
-			</div>
-			<script src="/static/front.js"></script>
+			<div id="dv_close_btn" onclick="close_shop_detail()">×</div>
+		</div>
+		<script src="/static/front.js"></script>
 	</body>
 </html>

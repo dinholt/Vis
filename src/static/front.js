@@ -4,7 +4,7 @@ function recv(type="scatter")
     if(type=="scatter")
     {
         $.getJSON(
-            "/query?type=all_shops&sff="+score_filter_from+"&sft="+score_filter_to+"&pff="+price_filter_from+"&pft="+price_filter_to,
+            "/query?type=all_shops&sff="+score_filter_from+"&sft="+score_filter_to+"&pff="+price_filter_from+"&pft="+price_filter_to+"&cf="+clock_from+"&ct="+clock_to+"&tr="+pop_threshold,
             function(data)
             {
                 option.series[0].data = []
@@ -22,7 +22,7 @@ function recv(type="scatter")
     if(type=="heatmap")
     {
         $.getJSON(
-            "/query?type=all_shops&sff="+score_filter_from+"&sft="+score_filter_to+"&pff="+price_filter_from+"&pft="+price_filter_to,
+            "/query?type=all_shops&sff="+score_filter_from+"&sft="+score_filter_to+"&pff="+price_filter_from+"&pft="+price_filter_to+"&cf="+clock_from+"&ct="+clock_to+"&tr="+pop_threshold,
             function(data)
             {
                 option.series[0].data = []
@@ -54,9 +54,11 @@ function setOption()
 
 function switch_to_heat()
 {
+    $("#user_filter_view").css("display","none")
     $("#select_shops_analysis").attr("class","select")
     $("#select_users_analysis").attr("class","select")
     $("#select_shops_heat").attr("class","select select_selected")
+    close_user_detail()
     option.series[0].type = "heatmap"
     current_type = "heatmap"
     recv("heatmap")
@@ -64,25 +66,74 @@ function switch_to_heat()
 
 function switch_to_scatter()
 {
+    $("#user_filter_view").css("display","none")
     $("#select_shops_analysis").attr("class","select select_selected")
     $("#select_users_analysis").attr("class","select")
     $("#select_shops_heat").attr("class","select")
+    close_user_detail()
     option.series[0].type = "scatter"
     current_type = "scatter"
     recv("scatter")
 }
 
+function switch_to_user()
+{
+    $("#user_filter_view").css("display","block")
+    $("#select_shops_analysis").attr("class","select")
+    $("#select_users_analysis").attr("class","select select_selected")
+    $("#select_shops_heat").attr("class","select")
+    option.series[0].type = "scatter"
+    current_type = "user"
+}
+
+function meals_only()
+{
+    if(meals_flag==0)
+    {
+        meals_flag = 1;
+        $("#meal_only").css("background-color","#da4453")
+    }
+    else{
+        meals_flag = 0;
+        $("#meal_only").css("background-color","#333")
+    }
+    click_on_shop({
+        name:cname,
+        poiid:cid
+    })
+}
+
 function click_on_shop(data)
 {
     console.log(data);
-    show_shop_detail(data['name'],data['poiid'])
+    cname = data['name']
+    cid = data['poiid']
+    show_shop_detail(cname,cid)
     wc_img = document.getElementById("wc_img")
-    wc_img.setAttribute("src",'/wordcloud?id='+data['poiid']+"&seed="+Math.random()+"&type=shop" )
+    wc_img.setAttribute("src",'/wordcloud?id='+cid+"&seed="+Math.random()+"&type=shop&meal_only="+meals_flag )
+    bring_view_2top('shop')
+}
+
+function bring_view_2top(t)
+{
+    if(t=="user")
+    {
+        $("#shop_detail_view_border").css("z-index",1)
+        $("#user_detail_view_border").css("z-index",2)
+    }
+    else{
+        $("#shop_detail_view_border").css("z-index",2)
+        $("#user_detail_view_border").css("z-index",1)
+    }
 }
 
 function show_user_detail(uid)
 {
-
+    $("#user_detail_view_border").css("right","100px")
+    setTimeout(function(){
+        bring_view_2top('user')
+    },1)
+    switch_to_user()
 }
 
 function show_shop_detail(name,poiid)
@@ -128,7 +179,7 @@ function show_shop_detail(name,poiid)
                     {
                         e[1] = '匿名用户'
                     }
-                    new_node = $('<div class="info_box comment" onclick="show_user_detail('+e[1]+')">'+e[1]+':'+e[0]+'</div>')
+                    new_node = $('<div class="info_box comment" onclick="show_user_detail(\''+e[1]+'\')">'+e[1]+':'+e[0]+'</div>')
                     $("#comments_view").append(new_node)
                 }
             )
@@ -136,11 +187,15 @@ function show_shop_detail(name,poiid)
         }
     )
 
-    document.getElementById("shop_detail_view_border").style.setProperty("right","50px")
+    $("#shop_detail_view_border").css("right","50px")
 }
 function close_shop_detail()
 {
-    document.getElementById("shop_detail_view_border").style.setProperty("right","-550px")
+    $("#shop_detail_view_border").css("right","-550px")
+}
+function close_user_detail()
+{
+    $("#user_detail_view_border").css("right","-550px")
 }
 
 $("#slider_score").ionRangeSlider({
@@ -177,12 +232,54 @@ $("#slider_price").ionRangeSlider({
     }
 });
 
+$("#slider_clock").ionRangeSlider({
+    type: "double",
+    min: 1,
+    max: 24,
+    from: 6,
+    to: 24,
+    step: 1,
+    grid: true,
+    onFinish: function(data)
+    {
+        console.log(data.from,data.to)
+        clock_from = data.from
+        clock_to = data.to
+        recv(current_type)
+    }
+});
+
+$("#slider_threshold").ionRangeSlider({
+    type: "double",
+    min: 1,
+    max: 100,
+    from: 20,
+    to: 100,
+    hide_min_max: true,
+    to_fixed: true,
+    step: 1,
+    grid: true,
+    onFinish: function(data)
+    {
+        console.log(data.from,data.to)
+        pop_threshold = data.from
+        recv(current_type)
+    }
+});
 
 var score_filter_from = 1
 var score_filter_to = 5
 var price_filter_from = 10
 var price_filter_to = 40
+var clock_from = 6
+var clock_to = 24
 var current_type = "scatter"
+var pop_threshold = 20
+
+var meals_flag = 0;
+var cname = "test";
+var cid = "0";
+var cuid = "0"
 
 var chartDom = document.getElementById('map_view');
 var myChart = echarts.init(chartDom);

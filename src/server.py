@@ -17,7 +17,11 @@ def query():
         sft = float(request.args.get("sft"))
         pff = float(request.args.get("pff"))
         pft = float(request.args.get("pft"))
-        return jsonify( dp.get_all_shops( filter_=[sff,sft,pff,pft]) )
+        cf = float(request.args.get("cf"))
+        ct = float(request.args.get("ct"))
+        uid = request.args.get("uid")
+        tr = int(request.args.get("tr"))
+        return jsonify( dp.get_all_shops( filter_=[sff,sft,pff,pft,cf,ct,uid,tr]) )
     if request.args.get("type") == "shop_detail":
         poiid = request.args.get("poiid")
         return jsonify( dp.get_shop_detail(poiid) )
@@ -25,8 +29,9 @@ def query():
 
 @app.route("/wordcloud")
 def wordcloud():
+    meal_only = request.args.get("meal_only")=="1"
     if request.args.get("type") == "shop":
-        return send_file( wordcloudgen(dp,request.args.get("id"),"shop"), mimetype='image/png', as_attachment=False )
+        return send_file( wordcloudgen(dp,request.args.get("id"),"shop",meal_only), mimetype='image/png', as_attachment=False )
     if request.args.get("type") == "user":
         pass
     return send_file( wordcloudgen(dp), mimetype='image/png', as_attachment=False )

@@ -1,5 +1,6 @@
 import csv
 import sys
+import re
 import sqlite3
 from wordcloud import WordCloud
 from PIL import Image
@@ -17,11 +18,15 @@ def sqlite_escape(keyword):
     keyword = keyword.replace(")", "/)");  
     return keyword
 
-def wordcloudgen(dp,id_="0",type_="0"):
+def wordcloudgen(dp,id_="0",type_="0",meal_only=False):
     img = io.BytesIO()
     font = "Deng.ttf"
     if type_=="shop":
-        txt = " ".join([ i[2] for i in dp.comments.get(id_) ])
+        txt = "?".join([ i[2] for i in dp.comments.get(id_) ])
+        if meal_only:
+            txt = " ".join( re.findall(" \#(\w+)\#",txt) )
+            if len(txt) <10:
+                txt = "菜品相关评价不足"
     else:
         #txt = open("bee.txt",'r').read()
         txt = "餐饮词云 好耶 好耶 好耶 好耶"
@@ -54,29 +59,41 @@ class DataProcess():
         self.comments = Comments()
     def get_all_shops(self,filter_):
         results = []
-        sff,sft,pff,pft = filter_
-        for poiid in self.shops.hash_table:
+        sff,sft,pff,pft,cf,ct,uid,tr = filter_
+
+        if uid:
+            poiid_li = self.shops.hash_table.keys()
+        else:
+            poiid_li = self.shops.hash_table.keys()
+
+        for poiid in poiid_li:
             shop = self.shops.hash_table[poiid]
-
+            openTime = shop[5]
             avgScore = shop[2]
-            if avgScore: 
-                avgScore = float(avgScore)
-                if avgScore<1:
-                    avgScore = 1.0
-            else:
-                avgScore = 1.0
             avgPrice = shop[10]
-            if avgPrice: 
-                avgPrice = float(avgPrice)
-                if avgPrice>100:
-                    avgPrice = 99
-                if avgPrice<5:
-                    avgPrice = 6
-            else:
-                avgPrice = 5.0
-
-            if avgScore<sff or avgScore>sft or avgPrice<pff or avgPrice>pft:
-                continue
+            if not uid:
+                if self.comments.count(poiid)<tr:
+                    continue
+                if openTime[0]>ct or openTime[1]<cf:
+                    continue
+                if avgScore: 
+                    avgScore = float(avgScore)
+                    if avgScore<1:
+                        avgScore = 1.0
+                else:
+                    avgScore = 1.0
+                if avgScore<sff or avgScore>sft:
+                    continue
+                if avgPrice: 
+                    avgPrice = float(avgPrice)
+                    if avgPrice>100:
+                        avgPrice = 99
+                    if avgPrice<5:
+                        avgPrice = 6
+                else:
+                    avgPrice = 5.0
+                if avgPrice<pff or avgPrice>pft:
+                    continue
             shop_name = shop[1] 
             shop_add = shop[2]
             shop_coo = (shop[8], shop[9])
@@ -111,7 +128,7 @@ class DataProcess():
         result['comments'].sort(key=lambda x: - len(x[0]) )
         result['comments'] = result['comments'][:20]
         result['comments'] = [ i for i in result['comments'] if i[0] ]
-        print(result['comments'])
+        #print(result['comments'])
         return result
 
 class DataLoader():
@@ -143,6 +160,18 @@ class ShopDetails(DataLoader):
     def __init__(self,*args,**kwargs):
         super(__class__,self).__init__(*args,**kwargs)
         self.load("shop_details.csv",0)
+        for poiid in self.hash_table:
+            shop = self.hash_table[poiid]
+            if len(shop)<13: continue
+            open_time_raw = shop[5]
+            if "全天" in open_time_raw or len(open_time_raw)<11:
+                self.hash_table[poiid][5] = (0,24)
+            else:
+                #print(open_time_raw)
+                re_match = re.search("(\d{1,2}).\d{1,2}.(\d{1,2}).\d{1,2}",open_time_raw)
+                open_time = int(re_match.group(1))
+                close_time = int(re_match.group(2))
+                self.hash_table[poiid][5] = (open_time,close_time)
 
 class Comments(DataLoader):
     '''读取评论信息文件 字段: userName,avgPrice,comment,picUrls,commentTime,zanCnt,userLevel,userId,star,reviewId,anonymous,poiId'''
@@ -159,14 +188,13 @@ class Comments(DataLoader):
     
     def get(self,poiid):
         if poiid in self.poiid_lookup:
-            if len(self.poiid_lookup[poiid])<12 or len(self.poiid_lookup[poiid][2]) <1:
+            if len(self.poiid_lookup[poiid])<1:
                 return [[0,0,"数据不足"]]
             return self.poiid_lookup[poiid]
         else:
             return [[0,0,"数据不足"]]
 
-
-TEST_FLAG = True
-
-if TEST_FLAG and __name__ == '__main__':
-    wordcloudgen()
+    def count(self,poiid):
+        if poiid in self.poiid_lookup:
+            return len(self.poiid_lookup[poiid])
+        return 0

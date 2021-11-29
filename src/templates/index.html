@@ -9,6 +9,7 @@
 			}
 
 			body {
+				z-index: 0;
 				height: 1080px;
 				width: 1920px;
 				background-color: #eee;
@@ -27,24 +28,25 @@
 			}
 
 			.select {
+				user-select: none;
 				position: fixed;
 				left: 20px;
 				top: 70px;
 				background-color: #fff;
-				height: 60px;
-				width: 100px;
+				height: 50px;
+				width: 80px;
 				border-radius: 10px;
 				box-shadow: #999 1px 1px 4px;
 				transition: all 0.2s ease-in-out;
 				text-align: center;
-				line-height: 60px;
-				font-size: 25px;
+				line-height: 50px;
+				font-size: 20px;
 			}
 
 			.select_selected {
-				border-width: 3px;
-				height: 57px;
-				width: 97px;
+				border-width: 2x;
+				height: 48px;
+				width: 97x;
 				border-color: #da4453;
 				border-style: solid;
 			}
@@ -52,16 +54,23 @@
 			#select_shops_analysis {
 				left: 20px;
 			}
-
-			#select_users_analysis {
-				left: 260px;
-			}
-
 			#select_shops_heat {
-				left: 140px;
+				left: 110px;
+				top: 90px;
+				width: 30px;
+				height: 30px;
+				line-height: 30px;
+				font-size: 15px;
 			}
+			#select_users_analysis {
+				
+				left: 310px;
+			}
+
+			
 
 			.filter_view {
+				user-select: none;
 				position: fixed;
 				left: 20px;
 				top: 140px;
@@ -71,7 +80,7 @@
 				border-radius: 10px;
 				box-shadow: #999 1px 1px 4px;
 			}
-			.user_filter_view
+			#user_filter_view
 			{
 				display: none;
 			}
@@ -126,7 +135,7 @@
 				width: 90%;
 			}
 
-			#dv_close_btn {
+			.dv_close_btn {
 				user-select: none;
 				position: absolute;
 				height: 50px;
@@ -143,7 +152,7 @@
 				font-size: 30px;
 			}
 
-			#dv_close_btn:hover {
+			.dv_close_btn:hover {
 				background-color: rgb(255, 52, 52);
 				color: #fff;
 			}
@@ -192,7 +201,7 @@
 			}
 
 			.filter {
-				position: absolute;
+				position: relative;
 				height: 100px;
 				width: 330px;
 				left: 20px;
@@ -219,7 +228,11 @@
 			}
 
 			#price_filter {
-				top: 120px;
+			}
+			#clock_filter
+			{
+			}
+			#pop_filter{
 			}
 			#star_pie{
 				position: relative;
@@ -232,6 +245,21 @@
 				height: 300px;
 				overflow-y: scroll;
 			}
+			#meal_only{
+				transition: all 0.2s ease-in-out;
+				position: absolute;
+				text-align: center;
+				line-height: 30px;
+				bottom: 5px;
+				background-color: #333333;
+				color: white;
+				width: 60px;
+				height: 30px;
+				font-size: 10px;
+				border-radius: 5px;
+				left: 1%;
+				
+			}
 			.comment{
 				top: 0;
 				width: 99%;
@@ -241,6 +269,14 @@
 				line-height: 20px;
 				font-size: 15px;
 				color: #333333;
+			}
+			#shop_detail_view_border{
+				z-index: 1;
+			}
+			#user_detail_view_border{
+				z-index: 2;
+				height: 800px;
+				top: 80px;
 			}
 		</style>
 		<script src="/static/jquery-3.6.0.js"></script>
@@ -253,8 +289,8 @@
 	<body>
 		<div id="title">Restaurants in Mianyang</div>
 		<div class="select" id="select_shops_analysis" onclick="switch_to_scatter()">餐馆</div>
-		<div class="select" id="select_shops_heat" onclick="switch_to_heat()">热力图</div>
-		<div class="select" id="select_users_analysis">用户</div>
+		<div class="select" id="select_shops_heat" onclick="switch_to_heat()">热</div>
+		<div class="select" id="select_users_analysis" onclick="switch_to_user()">用户</div>
 		<div class="filter_view">
 			<div id="score_filter" class="filter">
 				<font style="font-size: 25px; color: #333333;">评分</font>
@@ -264,17 +300,26 @@
 				<font style="font-size: 25px; color: #333333;">价格</font>
 				<input type="text" class="js-range-slider" id="slider_price" />
 			</div>
+			<div id="clock_filter" class="filter">
+				<font style="font-size: 25px; color: #333333;">营业时间</font>
+				<input type="text" class="js-range-slider" id="slider_clock" />
+			</div>
+			<div id="pop_filter" class="filter">
+				<font style="font-size: 25px; color: #333333;">评论数量</font>
+				<input type="text" class="js-range-slider" id="slider_threshold" />
+			</div>
 		</div>
-		<div class="filter_view user_filter_view">
+		<div class="filter_view" id="user_filter_view" >
 			
 		</div>
 		<div id="word_cloud_view">
 			<img src="/wordcloud" id="wc_img" />
+			<div id="meal_only" onclick="meals_only()">菜品相关</div>
 		</div>
 		<div id="map_view_border">
 			<div id="map_view"></div>
 		</div>
-		<div class="detail_view_border" id="shop_detail_view_border">
+		<div class="detail_view_border" id="shop_detail_view_border" onclick="bring_view_2top('shop')">
 			<div id="detail_view">
 				<div id="text_title">ShopTitle</div>
 				<div id="text_sub">ID:000</div>
@@ -298,8 +343,14 @@
 					<div class="info_box comment">fghdfghdfgh</div>
 				</div>
 			</div>
-			<div id="dv_close_btn" onclick="close_shop_detail()">×</div>
+			<div class="dv_close_btn" onclick="close_shop_detail()">×</div>
 		</div>
+		<div class="detail_view_border" id="user_detail_view_border" onclick="bring_view_2top('user')">
+			<div id="u_detail_view">
+				
+			</div>
+			<div class="dv_close_btn" onclick="close_user_detail()">×</div>
+			</div>
 		<script src="/static/front.js"></script>
 	</body>
 </html>

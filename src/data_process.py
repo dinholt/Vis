@@ -1,21 +1,24 @@
 import csv
 import sys
-import sqlite3
+#import sqlite3
 from wordcloud import WordCloud
-from PIL import Image
+#from PIL import Image
+from sklearn.cluster import KMeans
+import numpy as np
 import io
+import time
 
-def sqlite_escape(keyword):
-    keyword = keyword.replace("/", "//");  
-    keyword = keyword.replace("'", "''");  
-    keyword = keyword.replace("[", "/[");  
-    keyword = keyword.replace("]", "/]");  
-    keyword = keyword.replace("%", "/%");  
-    keyword = keyword.replace("&","/&");  
-    keyword = keyword.replace("_", "/_");  
-    keyword = keyword.replace("(", "/(");  
-    keyword = keyword.replace(")", "/)");  
-    return keyword
+# def sqlite_escape(keyword):
+#     keyword = keyword.replace("/", "//");  
+#     keyword = keyword.replace("'", "''");  
+#     keyword = keyword.replace("[", "/[");  
+#     keyword = keyword.replace("]", "/]");  
+#     keyword = keyword.replace("%", "/%");  
+#     keyword = keyword.replace("&","/&");  
+#     keyword = keyword.replace("_", "/_");  
+#     keyword = keyword.replace("(", "/(");  
+#     keyword = keyword.replace(")", "/)");  
+#     return keyword
 
 def wordcloudgen(dp,id_="0",type_="0"):
     img = io.BytesIO()
@@ -30,28 +33,29 @@ def wordcloudgen(dp,id_="0",type_="0"):
     #print(img)
     return img
 
-class InMemoryDatabase():
-    '''内存数据库'''
-    def __init__(self):
-        self.db = sqlite3.connect( ':memory:' ) #创建内存数据库
-        cur = self.db.cursor();
-        cur.execute("CREATE TABLE SHOPS(poiid INT NOT NULL, name VARCHAR(255), avgScore FLOAT, address TEXT, phone TEXT,openTime VARCHAR(255), extraInfos TEXT, hasFoodSafeInfo TINYINT, longitude DOUBLE, latitude DOUBLE, avgPrice INT, brandId INT, brandName TEXT, PRIMARY KEY (poiid) )")
-        cur.execute("CREATE TABLE COMMENTS()") #TODO
-    def insert(self,row,table="SHOPS"):
-        cur = self.db.cursor()
-        if table=="SHOPS":
-            cur.execute("INSERT INTO SHOPS()") #TODO
-        elif table=="COMMENTS":
-            cur.execute("INSERT INTO COMMENTS()") #TODO
-        pass
-    def query(self,key="*",filters=[]):
-        pass
+# class InMemoryDatabase():
+#     '''内存数据库'''
+#     def __init__(self):
+#         self.db = sqlite3.connect( ':memory:' ) #创建内存数据库
+#         cur = self.db.cursor();
+#         cur.execute("CREATE TABLE SHOPS(poiid INT NOT NULL, name VARCHAR(255), avgScore FLOAT, address TEXT, phone TEXT,openTime VARCHAR(255), extraInfos TEXT, hasFoodSafeInfo TINYINT, longitude DOUBLE, latitude DOUBLE, avgPrice INT, brandId INT, brandName TEXT, PRIMARY KEY (poiid) )")
+#         cur.execute("CREATE TABLE COMMENTS()") #TODO
+#     def insert(self,row,table="SHOPS"):
+#         cur = self.db.cursor()
+#         if table=="SHOPS":
+#             cur.execute("INSERT INTO SHOPS()") #TODO
+#         elif table=="COMMENTS":
+#             cur.execute("INSERT INTO COMMENTS()") #TODO
+#         pass
+#     def query(self,key="*",filters=[]):
+#         pass
         
 
 class DataProcess():
     def __init__(self):
         self.shops = ShopDetails()
         self.comments = Comments()
+        self.users = Users(self.comments)
     def get_all_shops(self,filter_):
         results = []
         sff,sft,pff,pft = filter_
@@ -139,13 +143,13 @@ class DataLoader():
         print("Hash Table memory usage:",int(sys.getsizeof(self.hash_table)/1024),"kb.")
 
 class ShopDetails(DataLoader):
-    '''读取商店信息文件 字段：poiid , name  avgScore , address  phone openTime  extraInfos , hasFoodSafeInfo , longitude , latitude , avgPrice , brandId , brandName '''
+    '''读取商店信息文件 字段:poiid,name,avgScore,address,phone,openTime,extraInfos,hasFoodSafeInfo,longitude,latitude,avgPrice,brandId ,brandName'''
     def __init__(self,*args,**kwargs):
         super(__class__,self).__init__(*args,**kwargs)
         self.load("shop_details.csv",0)
 
 class Comments(DataLoader):
-    '''读取评论信息文件 字段: userName,avgPrice,comment,picUrls,commentTime,zanCnt,userLevel,userId,star,reviewId,anonymous,poiId'''
+    '''读取评论信息文件 字段:userName,avgPrice,comment,picUrls,commentTime,zanCnt,userLevel,userId,star,reviewId,anonymous,poiId'''
     def __init__(self,*args,**kwargs):
         super(__class__,self).__init__(*args,**kwargs)
         self.load("shop_comments.csv",9)
@@ -165,8 +169,69 @@ class Comments(DataLoader):
         else:
             return [[0,0,"数据不足"]]
 
+class Users():
+    def __init__(self,comments) -> None:
+        self.hash_table = dict()
+        for comment in comments.hash_table:
+            comment = comments.hash_table[comment] 
+            if len(comment) <12:
+                continue
+            uid = comment[-5]
+            if uid in self.hash_table:
+                self.hash_table[uid]["comments"].append( comment )
+            else:
+                self.hash_table[uid] = {
+                    "comments": [ comment ],
+                    "price_range":[0,0,0,0,0],
+                    "time_range":[0 for _ in range(12)]
+                }
+
+            priceR = min( int(int(comment[1])/15),4)
+            #print(priceR)
+            self.hash_table[uid]['price_range'][priceR] += 1
+
+            timeR = int( comment[4][:10] )
+            timeR = int(timeR/(60*60))%24
+            timeR = int(timeR/2)
+            self.hash_table[uid]["time_range"][timeR] += 1
+
+def normalize(arr):
+    arr = np.array(arr)
+    arr= arr/max(arr)
+    return arr
+
+class ClusterUtil():
+    def __init__(self) -> None:
+        self.clusters = []
+        self.data = []
+    def load_data(self,users,thr=10):
+        uid_index = []
+        data = []
+        for uid in users:
+            if len(users[uid]["comments"]) <thr:
+                continue
+            uid_index.append(uid)
+            udata =  normalize( users[uid]["price_range"] )
+            udata = np.append( normalize( users[uid]["price_range"] )*2 , normalize( users[uid]["time_range"] )*1 )
+            data.append( udata )
+        self.data = np.array(data)
+
+    def apply_k_means(self,k):
+        kmeans = KMeans(n_clusters=k, random_state=0).fit(self.data)
+        print(kmeans.labels_[:100])
 
 TEST_FLAG = True
 
 if TEST_FLAG and __name__ == '__main__':
-    wordcloudgen()
+    users = Users( Comments() )
+    for u in list(users.hash_table.keys())[:]:
+        #print(u)
+        if len(users.hash_table[u]["comments"])>20 and not u=="0":
+            #print( users.hash_table[u] )
+            pass
+    print(len(users.hash_table))
+    cluster = ClusterUtil()
+    cluster.load_data(users.hash_table)
+    cluster.apply_k_means(k=16)
+    
+

@@ -6,7 +6,7 @@ from sklearn.cluster import KMeans
 import numpy as np
 import io
 import re
-import timeeyword
+import time
 
 def wordcloudgen(dp,id_="0",type_="0",meal_only=False):
     img = io.BytesIO()

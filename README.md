@@ -1,12 +1,13 @@
 # 餐饮类消费数据的可视分析系统
 
-可视化小组作业，基于Flask,jquery,echarts，  环境` Ubuntu 20 LTS ` , ` python 3.8 ` ,分辨率1920x1080,未适配其他分辨率。 
+可视化小组作业，基于Flask,jquery,echarts,sklearn  环境` Ubuntu 20 LTS ` , ` python 3.8 ` ,分辨率1920x1080,未适配其他分辨率。 
 
 
 依赖安装：
 ```bash
 pip3 install flask
 pip3 install wordcloud
+pip3 install sklearn
 ```
 
 运行:

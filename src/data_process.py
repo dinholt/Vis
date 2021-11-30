@@ -1,25 +1,12 @@
 import csv
 import sys
-#import sqlite3
 from wordcloud import WordCloud
 #from PIL import Image
 from sklearn.cluster import KMeans
 import numpy as np
 import io
 import re
-import time
-
-# def sqlite_escape(keyword):
-#     keyword = keyword.replace("/", "//");  
-#     keyword = keyword.replace("'", "''");  
-#     keyword = keyword.replace("[", "/[");  
-#     keyword = keyword.replace("]", "/]");  
-#     keyword = keyword.replace("%", "/%");  
-#     keyword = keyword.replace("&","/&");  
-#     keyword = keyword.replace("_", "/_");  
-#     keyword = keyword.replace("(", "/(");  
-#     keyword = keyword.replace(")", "/)");  
-#     return keyword
+import timeeyword
 
 def wordcloudgen(dp,id_="0",type_="0",meal_only=False):
     img = io.BytesIO()
@@ -37,24 +24,6 @@ def wordcloudgen(dp,id_="0",type_="0",meal_only=False):
     img.seek(0)
     #print(img)
     return img
-
-# class InMemoryDatabase():
-#     '''内存数据库'''
-#     def __init__(self):
-#         self.db = sqlite3.connect( ':memory:' ) #创建内存数据库
-#         cur = self.db.cursor();
-#         cur.execute("CREATE TABLE SHOPS(poiid INT NOT NULL, name VARCHAR(255), avgScore FLOAT, address TEXT, phone TEXT,openTime VARCHAR(255), extraInfos TEXT, hasFoodSafeInfo TINYINT, longitude DOUBLE, latitude DOUBLE, avgPrice INT, brandId INT, brandName TEXT, PRIMARY KEY (poiid) )")
-#         cur.execute("CREATE TABLE COMMENTS()") #TODO
-#     def insert(self,row,table="SHOPS"):
-#         cur = self.db.cursor()
-#         if table=="SHOPS":
-#             cur.execute("INSERT INTO SHOPS()") #TODO
-#         elif table=="COMMENTS":
-#             cur.execute("INSERT INTO COMMENTS()") #TODO
-#         pass
-#     def query(self,key="*",filters=[]):
-#         pass
-        
 
 class DataProcess():
     def __init__(self):

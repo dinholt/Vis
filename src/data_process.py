@@ -6,6 +6,7 @@ from wordcloud import WordCloud
 from sklearn.cluster import KMeans
 import numpy as np
 import io
+import re
 import time
 
 # def sqlite_escape(keyword):
@@ -75,7 +76,9 @@ class DataProcess():
             avgScore = shop[2]
             avgPrice = shop[10]
             if not uid:
-                if self.comments.count(poiid)<tr:
+                if not poiid in self.comments.poiid_lookup:
+                    continue
+                if len( self.comments.poiid_lookup[poiid] )<tr:
                     continue
                 if openTime[0]>ct or openTime[1]<cf:
                     continue
